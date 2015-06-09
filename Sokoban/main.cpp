@@ -1,10 +1,35 @@
 #define VC_EXTRALEAN
 #include <Windows.h>
+#include "resource.h"
 
 const char *CLASS_NAME = "WinMain";
 const char *APP_TITLE = "Sokoban";
-const int WINDOW_WIDTH = 640;
-const int WINDOW_HEIGHT = 480;
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
+HBITMAP sprites;
+
+char level[20][20] = {
+		{ 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 2, 6, 6, 6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 2, 3, 6, 6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 2, 2, 2, 6, 6, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 2, 6, 6, 3, 6, 3, 6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 2, 2, 2, 6, 2, 6, 2, 2, 6, 2, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0 },
+		{ 2, 6, 6, 6, 2, 6, 2, 2, 6, 2, 2, 2, 2, 2, 6, 6, 1, 1, 2, 0 },
+		{ 2, 6, 3, 6, 6, 3, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 2, 0 },
+		{ 2, 2, 2, 2, 2, 6, 2, 2, 2, 6, 2, 5, 2, 2, 6, 6, 1, 1, 2, 0 },
+		{ 0, 0, 0, 0, 2, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0 },
+		{ 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int);
 BOOL CreateMainWindow(HINSTANCE, int);
@@ -58,6 +83,32 @@ LRESULT WINAPI WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+	case WM_CREATE:
+		sprites = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_SPRITES));
+		break;
+	case WM_PAINT:
+		{
+			//BITMAP bm;
+			PAINTSTRUCT ps;
+
+			HDC hdc = BeginPaint(hWnd, &ps);
+
+			HDC hdcMem = CreateCompatibleDC(hdc);
+
+			SelectObject(hdcMem, sprites);
+			//GetObject(sprites, sizeof(bm), &bm);
+
+			for (int i = 0; i < 20; i++) {
+				for (int j = 0; j < 20; j++) {
+					BitBlt(hdc, i*36, j*36, 36, 36, hdcMem, level[j][i]*36, 0, SRCCOPY);
+				}
+			}
+
+
+			DeleteDC(hdcMem);
+
+			EndPaint(hWnd, &ps);
+		}
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
