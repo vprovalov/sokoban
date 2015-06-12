@@ -8,12 +8,15 @@ const int WINDOW_WIDTH = 750;
 const int WINDOW_HEIGHT = 600;
 const int LEVEL_WIDTH = 20;
 const int LEVEL_HEIGHT = 15;
+const int SPRITE_SIZE = 36;
 HBITMAP sprites;
 HWND hwnd;
 
 int playerX, playerY;
 int crateX, crateY;
 int keys;
+int currentLevel = 0;
+int numLevels = 1;
 
 const char D = 1 << 0;
 const char W = 1 << 1;
@@ -25,27 +28,62 @@ const int RIGHT = 1 << 2;
 const int UP    = 1 << 3;
 const int DOWN  = 1 << 4;
 
-char level[LEVEL_HEIGHT][LEVEL_WIDTH] = {
-		{ 0, 0, 0, 0, W, W, W, W, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, W, 0, 0, 0, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, W, C, 0, 0, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, W, W, W, 0, 0, C, W, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, W, 0, 0, C, 0, C, 0, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ W, W, W, 0, W, 0, W, W, 0, W, 0, 0, 0, W, W, W, W, W, W, 0 },
-		{ W, 0, 0, 0, W, 0, W, W, 0, W, W, W, W, W, 0, 0, D, D, W, 0 },
-		{ W, 0, C, 0, 0, C, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, D, D, W, 0 },
-		{ W, W, W, W, W, 0, W, W, W, 0, W, P, W, W, 0, 0, D, D, W, 0 },
-		{ 0, 0, 0, 0, W, 0, 0, 0, 0, 0, W, W, W, W, W, W, W, W, W, 0 },
-		{ 0, 0, 0, 0, W, W, W, W, W, W, W, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+char levels[] = {
+	0, 0, 0, 0, W, W, W, W, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, W, 0, 0, 0, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, W, C, 0, 0, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, W, W, W, 0, 0, C, W, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, W, 0, 0, C, 0, C, 0, W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	W, W, W, 0, W, 0, W, W, 0, W, 0, 0, 0, W, W, W, W, W, W, 0,
+	W, 0, 0, 0, W, 0, W, W, 0, W, W, W, W, W, 0, 0, D, D, W, 0,
+	W, 0, C, 0, 0, C, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, D, D, W, 0,
+	W, W, W, W, W, 0, W, W, W, 0, W, P, W, W, 0, 0, D, D, W, 0,
+	0, 0, 0, 0, W, 0, 0, 0, 0, 0, W, W, W, W, W, W, W, W, W, 0,
+	0, 0, 0, 0, W, W, W, W, W, W, W, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	W, W, W, W, W, W, W, W, W, W, W, W, 0, 0, 0, 0, 0, 0, 0, 0,
+	W, D, D, 0, 0, W, 0, 0, 0, 0, 0, W, W, W, 0, 0, 0, 0, 0, 0,
+	W, D, D, 0, 0, W, 0, C, 0, 0, C, 0, 0, W, 0, 0, 0, 0, 0, 0,
+	W, D, D, 0, 0, W, C, W, W, W, W, 0, 0, W, 0, 0, 0, 0, 0, 0,
+	W, D, D, 0, 0, 0, 0, P, 0, W, W, 0, 0, W, 0, 0, 0, 0, 0, 0,
+	W, D, D, 0, 0, W, 0, W, 0, 0, C, 0, W, W, 0, 0, 0, 0, 0, 0,
+	W, W, W, W, W, W, 0, W, W, C, 0, C, 0, W, 0, 0, 0, 0, 0, 0,
+	0, 0, W, 0, C, 0, 0, C, 0, C, 0, C, 0, W, 0, 0, 0, 0, 0, 0,
+	0, 0, W, 0, 0, 0, 0, W, 0, 0, 0, 0, 0, W, 0, 0, 0, 0, 0, 0,
+	0, 0, W, W, W, W, W, W, W, W, W, W, W, W, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
+
+char level[LEVEL_HEIGHT * LEVEL_WIDTH];
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int);
 BOOL CreateMainWindow(HINSTANCE, int);
 LRESULT WINAPI WinProc(HWND, UINT, WPARAM, LPARAM);
+void LoadLevel();
 
 BOOL CreateMainWindow(HINSTANCE hInstance, int nCmdShow) 
 {
@@ -94,23 +132,24 @@ void Draw(HDC hdc)
 
 	for (int j = 0; j < LEVEL_HEIGHT; j++) {
 		for (int i = 0; i < LEVEL_WIDTH; i++) {
-			int spritePosX = 0;
+			char entity = level[j*LEVEL_WIDTH + i];
+			int spritePosX = 6*SPRITE_SIZE;
 
-			if (level[j][i] & W) spritePosX = 2 * 36;
-			else if (level[j][i] & C) 
+			if (entity & W) spritePosX = 2 * SPRITE_SIZE;
+			else if (entity & C)
 			{
-				if (level[j][i] & D)
-					spritePosX = 4 * 36;
+				if (entity & D)
+					spritePosX = 4 * SPRITE_SIZE;
 				else
-					spritePosX = 3 * 36;
+					spritePosX = 3 * SPRITE_SIZE;
 			}
-			else if (level[j][i] & D) spritePosX = 1 * 36;
+			else if (entity & D) spritePosX = 1 * SPRITE_SIZE;
 
-			BitBlt(hdc, i * 36, j * 36, 36, 36, hdcMem, spritePosX, 0, SRCCOPY);
+			BitBlt(hdc, i * SPRITE_SIZE, j * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, hdcMem, spritePosX, 0, SRCCOPY);
 		}
 	}
 
-	BitBlt(hdc, playerX * 36, playerY * 36, 36, 36, hdcMem, 5*36, 0, SRCCOPY);
+	BitBlt(hdc, playerX * SPRITE_SIZE, playerY * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, hdcMem, 5*SPRITE_SIZE, 0, SRCCOPY);
 
 	DeleteDC(hdcMem);
 }
@@ -210,23 +249,36 @@ bool UpdateGame()
 		return false;
 	}
 
-	char tmp = level[playerY + dirY][playerX + dirX];
+	char tmp = level[(playerY + dirY)*LEVEL_WIDTH + playerX + dirX];
 
 	if ((tmp & W) + (tmp & C) == 0) {
-		level[playerY][playerX] &= ~P;
+		level[playerY*LEVEL_WIDTH + playerX] &= ~P;
 		playerX += dirX;
 		playerY += dirY;
-		level[playerY][playerX] |= P;
+		level[playerY*LEVEL_WIDTH + playerX] |= P;
 	}
-	else if (level[playerY + dirY][playerX + dirX] & C) {
-		tmp = level[playerY + dirY + dirY][playerX + dirX + dirX];
+	else if (level[(playerY + dirY) * LEVEL_WIDTH + playerX + dirX] & C) {
+		tmp = level[(playerY + dirY + dirY) * LEVEL_WIDTH + playerX + dirX + dirX];
 		if ((tmp & C) + (tmp & W) == 0) {
-			level[playerY][playerX] &= ~P;
+			level[playerY*LEVEL_WIDTH + playerX] &= ~P;
 			playerX += dirX;
 			playerY += dirY;
-			level[playerY][playerX] &= ~C;
-			level[playerY][playerX] |= P;
-			level[playerY + dirY][playerX + dirX] |= C;
+			level[playerY*LEVEL_WIDTH + playerX] &= ~C;
+			level[playerY*LEVEL_WIDTH + playerX] |= P;
+			level[(playerY + dirY)*LEVEL_WIDTH + playerX + dirX] |= C;
+
+
+			int i = 0;
+			for (; i < LEVEL_HEIGHT*LEVEL_WIDTH; i++)
+			{
+				if (level[i] & C && (level[i] & D) == 0) break;
+			}
+
+			if (i == LEVEL_HEIGHT*LEVEL_WIDTH && currentLevel < numLevels)
+			{
+				currentLevel++;
+				LoadLevel();
+			}
 		}
 	}
 
@@ -235,18 +287,24 @@ bool UpdateGame()
 	return true;
 }
 
-void InitGame() 
+void LoadLevel()
 {
-	for (int j = 0; j < LEVEL_HEIGHT; j++) {
-		for (int i = 0; i < LEVEL_WIDTH; i++) {
-			if (level[j][i] == P)
-			{
-				playerX = i;
-				playerY = j;
-				break;
-			}
+	memcpy(level, levels + LEVEL_HEIGHT*LEVEL_WIDTH*currentLevel, LEVEL_HEIGHT*LEVEL_WIDTH*sizeof(char));
+
+	for (int i = 0; i < LEVEL_HEIGHT*LEVEL_WIDTH; i++)
+	{
+		if (level[i] == P)
+		{
+			playerX = i % LEVEL_WIDTH;
+			playerY = i / LEVEL_WIDTH;
+			break;
 		}
 	}
+}
+
+void InitGame() 
+{
+	LoadLevel();
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
